@@ -3,7 +3,6 @@
 package com.kotlinllm
 
 import com.kotlinllm.core.*
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import java.util.concurrent.CompletableFuture
@@ -12,9 +11,6 @@ import java.util.function.Consumer
 
 /**
  * Java-friendly API for KotlinLLM.
- *
- * This class provides blocking and CompletableFuture-based methods
- * for easy integration with Java code.
  *
  * Example:
  * ```java
@@ -25,33 +21,38 @@ import java.util.function.Consumer
  * });
  *
  * // Simple chat
- * Chat chat = KotlinLLM.chat();
- * Message response = JavaLLM.ask(chat, "Hello!");
+ * JavaChat chat = JavaLLM.chat("gpt-4o");
+ * Message response = chat.ask("Hello!");
  * System.out.println(response.getText());
  *
+ * // Fluent building
+ * JavaChat chat = JavaLLM.chat("gpt-4o")
+ *     .withInstructions("You are a helpful assistant")
+ *     .withTemperature(0.7);
+ *
  * // Async with CompletableFuture
- * CompletableFuture<Message> future = JavaLLM.askAsync(chat, "Hello!");
- * future.thenAccept(msg -> System.out.println(msg.getText()));
+ * chat.askAsync("Hello!")
+ *     .thenAccept(msg -> System.out.println(msg.getText()));
  * ```
  */
 object JavaLLM {
-    private val executor = Executors.newCachedThreadPool()
+    internal val executor = Executors.newCachedThreadPool()
 
-    // ==================== Blocking API ====================
-
-    /**
-     * Send a message and get a response (blocking).
-     */
-    @JvmStatic
-    fun ask(chat: Chat, message: String): Message = runBlocking {
-        chat.ask(message)
-    }
+    // ==================== Chat Creation ====================
 
     /**
-     * Send a message and get a response (blocking).
+     * Create a new chat with the default model.
      */
     @JvmStatic
-    fun say(chat: Chat, message: String): Message = ask(chat, message)
+    fun chat(): JavaChat = JavaChat(KotlinLLM.chat())
+
+    /**
+     * Create a new chat with a specific model.
+     */
+    @JvmStatic
+    fun chat(model: String): JavaChat = JavaChat(KotlinLLM.chat(model))
+
+    // ==================== Quick One-Shot API ====================
 
     /**
      * Quick one-shot chat (blocking).
@@ -67,18 +68,6 @@ object JavaLLM {
     @JvmStatic
     fun quickChat(message: String, model: String): String = runBlocking {
         KotlinLLM.chat(model).ask(message).text
-    }
-
-    // ==================== Async API ====================
-
-    /**
-     * Send a message and get a response (async).
-     */
-    @JvmStatic
-    fun askAsync(chat: Chat, message: String): CompletableFuture<Message> {
-        return CompletableFuture.supplyAsync({
-            runBlocking { chat.ask(message) }
-        }, executor)
     }
 
     /**
@@ -101,49 +90,7 @@ object JavaLLM {
         }, executor)
     }
 
-    // ==================== Streaming API ====================
-
-    /**
-     * Stream a response with a callback for each chunk.
-     */
-    @JvmStatic
-    fun askStreaming(chat: Chat, message: String, onChunk: Consumer<Chunk>) {
-        runBlocking {
-            chat.askStreaming(message).collect { chunk ->
-                onChunk.accept(chunk)
-            }
-        }
-    }
-
-    /**
-     * Stream a response with a callback (async).
-     */
-    @JvmStatic
-    fun askStreamingAsync(chat: Chat, message: String, onChunk: Consumer<Chunk>): CompletableFuture<Void> {
-        return CompletableFuture.runAsync({
-            runBlocking {
-                chat.askStreaming(message).collect { chunk ->
-                    onChunk.accept(chunk)
-                }
-            }
-        }, executor)
-    }
-
-    /**
-     * Collect all streaming chunks into a list (blocking).
-     */
-    @JvmStatic
-    fun collectStream(chat: Chat, message: String): List<Chunk> = runBlocking {
-        chat.askStreaming(message).toList()
-    }
-
     // ==================== Builder Helpers ====================
-
-    /**
-     * Create a chat builder for Java.
-     */
-    @JvmStatic
-    fun chatBuilder(): JavaChatBuilder = JavaChatBuilder()
 
     /**
      * Create a tool builder for Java.
@@ -153,29 +100,127 @@ object JavaLLM {
 }
 
 /**
- * Java-friendly chat builder.
+ * Java-friendly chat wrapper.
+ *
+ * Wraps the Kotlin Chat class and provides blocking/async methods
+ * that can be called directly from Java without coroutine handling.
+ *
+ * Example:
+ * ```java
+ * JavaChat chat = JavaLLM.chat("gpt-4o")
+ *     .withInstructions("You are helpful")
+ *     .withTemperature(0.7);
+ *
+ * Message response = chat.ask("Hello!");
+ * System.out.println(response.getText());
+ * ```
  */
-class JavaChatBuilder {
-    private var model: String = KotlinLLM.config().defaultModel
-    private var systemPrompt: String? = null
-    private val tools = mutableListOf<Tool>()
-    private var temperature: Double? = null
-    private var maxTokens: Int? = null
+class JavaChat internal constructor(private val chat: Chat) {
 
-    fun model(model: String): JavaChatBuilder = apply { this.model = model }
-    fun system(instructions: String): JavaChatBuilder = apply { this.systemPrompt = instructions }
-    fun tool(tool: Tool): JavaChatBuilder = apply { this.tools.add(tool) }
-    fun temperature(value: Double): JavaChatBuilder = apply { this.temperature = value }
-    fun maxTokens(value: Int): JavaChatBuilder = apply { this.maxTokens = value }
+    // ==================== Configuration ====================
 
-    fun build(): Chat {
-        return KotlinLLM.chat(model).apply {
-            systemPrompt?.let { withInstructions(it) }
-            tools.forEach { withTool(it) }
-            temperature?.let { withTemperature(it) }
-            maxTokens?.let { withMaxTokens(it) }
+    /**
+     * Set system instructions.
+     */
+    fun withInstructions(instructions: String): JavaChat = apply {
+        chat.withInstructions(instructions)
+    }
+
+    /**
+     * Add a tool.
+     */
+    fun withTool(tool: Tool): JavaChat = apply {
+        chat.withTool(tool)
+    }
+
+    /**
+     * Set temperature.
+     */
+    fun withTemperature(temperature: Double): JavaChat = apply {
+        chat.withTemperature(temperature)
+    }
+
+    /**
+     * Set max tokens.
+     */
+    fun withMaxTokens(maxTokens: Int): JavaChat = apply {
+        chat.withMaxTokens(maxTokens)
+    }
+
+    // ==================== Blocking API ====================
+
+    /**
+     * Send a message and get a response (blocking).
+     */
+    fun ask(message: String): Message = runBlocking {
+        chat.ask(message)
+    }
+
+    /**
+     * Alias for ask().
+     */
+    fun say(message: String): Message = ask(message)
+
+    /**
+     * Stream a response with a callback for each chunk (blocking).
+     */
+    fun askStreaming(message: String, onChunk: Consumer<Chunk>) {
+        runBlocking {
+            chat.askStreaming(message).collect { chunk ->
+                onChunk.accept(chunk)
+            }
         }
     }
+
+    /**
+     * Collect all streaming chunks into a list (blocking).
+     */
+    fun collectStream(message: String): List<Chunk> = runBlocking {
+        chat.askStreaming(message).toList()
+    }
+
+    // ==================== Async API ====================
+
+    /**
+     * Send a message and get a response (async).
+     */
+    fun askAsync(message: String): CompletableFuture<Message> {
+        return CompletableFuture.supplyAsync({
+            runBlocking { chat.ask(message) }
+        }, JavaLLM.executor)
+    }
+
+    /**
+     * Stream a response with a callback (async).
+     */
+    fun askStreamingAsync(message: String, onChunk: Consumer<Chunk>): CompletableFuture<Void> {
+        return CompletableFuture.runAsync({
+            runBlocking {
+                chat.askStreaming(message).collect { chunk ->
+                    onChunk.accept(chunk)
+                }
+            }
+        }, JavaLLM.executor)
+    }
+
+    // ==================== Accessors ====================
+
+    /**
+     * Get the conversation history.
+     */
+    fun getMessages(): List<Message> = chat.messages()
+
+    /**
+     * Get total tokens used (sum of all message tokens).
+     */
+    fun getTotalTokens(): Int = chat.messages().sumOf {
+        (it.tokens?.total ?: 0)
+    }
+
+    /**
+     * Get the underlying Kotlin Chat (for advanced use).
+     */
+    fun unwrap(): Chat = chat
 }
 
 /**

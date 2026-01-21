@@ -75,12 +75,26 @@ interface Provider {
 
         /**
          * Resolve provider for a model ID.
+         *
+         * Supports:
+         * - OpenAI: gpt-4*, gpt-5*, o1*, o3*, o4*, gpt-image-*
+         * - Anthropic: claude-*
+         * - Google: gemini-*
          */
         fun forModel(modelId: String): Provider {
             return when {
-                modelId.startsWith("gpt-") || modelId.startsWith("o1") || modelId.startsWith("o3") -> get("openai")
+                // OpenAI models: GPT series, o-series reasoning models, image generation
+                modelId.startsWith("gpt-") ||
+                modelId.startsWith("o1") ||
+                modelId.startsWith("o3") ||
+                modelId.startsWith("o4") -> get("openai")
+
+                // Anthropic models
                 modelId.startsWith("claude-") -> get("anthropic")
+
+                // Google models
                 modelId.startsWith("gemini-") -> get("gemini")
+
                 else -> get("openai") // Default fallback
             } ?: throw IllegalArgumentException("No provider found for model: $modelId")
         }

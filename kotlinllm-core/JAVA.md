@@ -1,6 +1,6 @@
 # KotlinLLM for Java Developers
 
-This guide shows how to use KotlinLLM from Java code. While KotlinLLM is written in Kotlin, it provides a Java-friendly API through the `JavaLLM` class.
+This guide shows how to use KotlinLLM from Java code. While KotlinLLM is written in Kotlin, it provides a Java-friendly API through the `JavaLLM` and `JavaChat` classes.
 
 ## Installation
 
@@ -57,9 +57,8 @@ public class Main {
 ### Simple Chat (Blocking)
 
 ```java
-import com.kotlinllm.KotlinLLM;
 import com.kotlinllm.JavaLLM;
-import com.kotlinllm.core.Chat;
+import com.kotlinllm.JavaChat;
 import com.kotlinllm.core.Message;
 
 public class SimpleChat {
@@ -81,47 +80,43 @@ public class SimpleChat {
 ### Chat with Conversation History
 
 ```java
-import com.kotlinllm.KotlinLLM;
 import com.kotlinllm.JavaLLM;
-import com.kotlinllm.core.Chat;
+import com.kotlinllm.JavaChat;
 import com.kotlinllm.core.Message;
 
 public class ConversationExample {
     public static void main(String[] args) {
-        // Create a chat instance
-        Chat chat = KotlinLLM.chat("gpt-4o")
+        // Create a chat instance with fluent configuration
+        JavaChat chat = JavaLLM.chat("gpt-4o")
             .withInstructions("You are a helpful math tutor.")
             .withTemperature(0.7);
 
         // First question
-        Message response1 = JavaLLM.ask(chat, "What is 2 + 2?");
+        Message response1 = chat.ask("What is 2 + 2?");
         System.out.println("Assistant: " + response1.getText());
 
         // Follow-up (maintains conversation history)
-        Message response2 = JavaLLM.ask(chat, "Now multiply that by 10");
+        Message response2 = chat.ask("Now multiply that by 10");
         System.out.println("Assistant: " + response2.getText());
     }
 }
 ```
 
-### Using the Builder Pattern
+### Fluent API
 
 ```java
 import com.kotlinllm.JavaLLM;
-import com.kotlinllm.JavaChatBuilder;
-import com.kotlinllm.core.Chat;
+import com.kotlinllm.JavaChat;
 import com.kotlinllm.core.Message;
 
-public class BuilderExample {
+public class FluentExample {
     public static void main(String[] args) {
-        Chat chat = JavaLLM.chatBuilder()
-            .model("claude-sonnet-4-20250514")
-            .system("You are a helpful coding assistant.")
-            .temperature(0.5)
-            .maxTokens(1000)
-            .build();
+        JavaChat chat = JavaLLM.chat("claude-sonnet-4-20250514")
+            .withInstructions("You are a helpful coding assistant.")
+            .withTemperature(0.5)
+            .withMaxTokens(1000);
 
-        Message response = JavaLLM.ask(chat, "Write a hello world in Java");
+        Message response = chat.ask("Write a hello world in Java");
         System.out.println(response.getText());
     }
 }
@@ -130,18 +125,17 @@ public class BuilderExample {
 ## Async Operations with CompletableFuture
 
 ```java
-import com.kotlinllm.KotlinLLM;
 import com.kotlinllm.JavaLLM;
-import com.kotlinllm.core.Chat;
+import com.kotlinllm.JavaChat;
 import com.kotlinllm.core.Message;
 import java.util.concurrent.CompletableFuture;
 
 public class AsyncExample {
     public static void main(String[] args) {
-        Chat chat = KotlinLLM.chat();
+        JavaChat chat = JavaLLM.chat("gpt-4o");
 
         // Async call
-        CompletableFuture<Message> future = JavaLLM.askAsync(chat, "Hello!");
+        CompletableFuture<Message> future = chat.askAsync("Hello!");
 
         // Do other work while waiting...
         System.out.println("Request sent, doing other work...");
@@ -163,17 +157,15 @@ public class AsyncExample {
 ## Streaming Responses
 
 ```java
-import com.kotlinllm.KotlinLLM;
 import com.kotlinllm.JavaLLM;
-import com.kotlinllm.core.Chat;
-import com.kotlinllm.core.Chunk;
+import com.kotlinllm.JavaChat;
 
 public class StreamingExample {
     public static void main(String[] args) {
-        Chat chat = KotlinLLM.chat("gpt-4o");
+        JavaChat chat = JavaLLM.chat("gpt-4o");
 
         // Streaming with callback
-        JavaLLM.askStreaming(chat, "Write a poem about coding", chunk -> {
+        chat.askStreaming("Write a poem about coding", chunk -> {
             // Print each chunk as it arrives
             System.out.print(chunk.getContent());
         });
@@ -186,17 +178,15 @@ public class StreamingExample {
 ### Async Streaming
 
 ```java
-import com.kotlinllm.KotlinLLM;
 import com.kotlinllm.JavaLLM;
-import com.kotlinllm.core.Chat;
+import com.kotlinllm.JavaChat;
 import java.util.concurrent.CompletableFuture;
 
 public class AsyncStreamingExample {
     public static void main(String[] args) {
-        Chat chat = KotlinLLM.chat();
+        JavaChat chat = JavaLLM.chat("gpt-4o");
 
-        CompletableFuture<Void> future = JavaLLM.askStreamingAsync(
-            chat,
+        CompletableFuture<Void> future = chat.askStreamingAsync(
             "Explain REST APIs",
             chunk -> System.out.print(chunk.getContent())
         );
@@ -211,10 +201,8 @@ public class AsyncStreamingExample {
 ## Creating Tools (Function Calling)
 
 ```java
-import com.kotlinllm.KotlinLLM;
 import com.kotlinllm.JavaLLM;
-import com.kotlinllm.JavaToolBuilder;
-import com.kotlinllm.core.Chat;
+import com.kotlinllm.JavaChat;
 import com.kotlinllm.core.Tool;
 import com.kotlinllm.core.Message;
 
@@ -227,7 +215,6 @@ public class ToolsExample {
                 String expression = args.getString("expression");
                 // Simple evaluation (in production, use a proper expression parser)
                 try {
-                    // This is simplified - use javax.script or similar in production
                     double result = evaluateExpression(expression);
                     return "Result: " + result;
                 } catch (Exception e) {
@@ -249,11 +236,11 @@ public class ToolsExample {
             .build();
 
         // Use tools in chat
-        Chat chat = KotlinLLM.chat("gpt-4o")
+        JavaChat chat = JavaLLM.chat("gpt-4o")
             .withTool(calculator)
             .withTool(weather);
 
-        Message response = JavaLLM.ask(chat, "What's 15 * 7? Also, what's the weather in Tokyo?");
+        Message response = chat.ask("What's 15 * 7? Also, what's the weather in Tokyo?");
         System.out.println(response.getText());
     }
 
@@ -273,20 +260,19 @@ public class ToolsExample {
 ## Working with Different Providers
 
 ```java
-import com.kotlinllm.KotlinLLM;
 import com.kotlinllm.JavaLLM;
-import com.kotlinllm.core.Chat;
+import com.kotlinllm.JavaChat;
 import com.kotlinllm.core.Message;
 
 public class ProvidersExample {
     public static void main(String[] args) {
         // OpenAI
-        Chat openaiChat = KotlinLLM.chat("gpt-4o");
-        Message openaiResponse = JavaLLM.ask(openaiChat, "Hello from OpenAI!");
+        JavaChat openaiChat = JavaLLM.chat("gpt-4o");
+        Message openaiResponse = openaiChat.ask("Hello from OpenAI!");
 
         // Anthropic Claude
-        Chat claudeChat = KotlinLLM.chat("claude-sonnet-4-20250514");
-        Message claudeResponse = JavaLLM.ask(claudeChat, "Hello from Claude!");
+        JavaChat claudeChat = JavaLLM.chat("claude-sonnet-4-20250514");
+        Message claudeResponse = claudeChat.ask("Hello from Claude!");
 
         // The model is auto-detected from the model name
         // gpt-* -> OpenAI
@@ -299,7 +285,6 @@ public class ProvidersExample {
 ## Error Handling
 
 ```java
-import com.kotlinllm.KotlinLLM;
 import com.kotlinllm.JavaLLM;
 import com.kotlinllm.providers.OpenAIException;
 import com.kotlinllm.providers.AnthropicException;
@@ -325,7 +310,7 @@ public class ErrorHandlingExample {
 ```java
 import com.kotlinllm.KotlinLLM;
 import com.kotlinllm.JavaLLM;
-import com.kotlinllm.core.Chat;
+import com.kotlinllm.JavaChat;
 import com.kotlinllm.core.Message;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -362,8 +347,8 @@ public class ChatService {
     }
 
     public String chatWithModel(String message, String model) {
-        Chat chat = KotlinLLM.chat(model);
-        Message response = JavaLLM.ask(chat, message);
+        JavaChat chat = JavaLLM.chat(model);
+        Message response = chat.ask(message);
         return response.getText();
     }
 }
@@ -374,7 +359,7 @@ public class ChatService {
 ```java
 import com.kotlinllm.KotlinLLM;
 import com.kotlinllm.JavaLLM;
-import com.kotlinllm.core.Chat;
+import com.kotlinllm.JavaChat;
 import com.kotlinllm.core.Message;
 import com.kotlinllm.core.Tool;
 import kotlin.Unit;
@@ -399,26 +384,22 @@ public class CompleteExample {
             .build();
 
         // 3. Create chat with tools and instructions
-        Chat chat = JavaLLM.chatBuilder()
-            .model("gpt-4o")
-            .system("You are a helpful research assistant. Use the search tool when needed.")
-            .tool(searchTool)
-            .temperature(0.7)
-            .build();
+        JavaChat chat = JavaLLM.chat("gpt-4o")
+            .withInstructions("You are a helpful research assistant. Use the search tool when needed.")
+            .withTool(searchTool)
+            .withTemperature(0.7);
 
         // 4. Have a conversation
         System.out.println("User: What are the latest developments in AI?");
-        Message response = JavaLLM.ask(chat, "What are the latest developments in AI?");
+        Message response = chat.ask("What are the latest developments in AI?");
         System.out.println("Assistant: " + response.getText());
 
         System.out.println("\nUser: Tell me more about LLMs specifically");
-        response = JavaLLM.ask(chat, "Tell me more about LLMs specifically");
+        response = chat.ask("Tell me more about LLMs specifically");
         System.out.println("Assistant: " + response.getText());
 
         // 5. Check token usage
-        if (response.getTokens() != null) {
-            System.out.println("\nTokens used: " + response.getTokens().getTotal());
-        }
+        System.out.println("\nTotal tokens used: " + chat.getTotalTokens());
     }
 }
 ```
@@ -429,20 +410,24 @@ public class CompleteExample {
 
 2. **Unit Type**: When using lambdas that don't return a value (like `configure`), return `Unit.INSTANCE`.
 
-3. **Blocking vs Async**: Use `JavaLLM` methods ending in `Async` for non-blocking operations.
+3. **Blocking vs Async**: Use methods ending in `Async` for non-blocking operations.
 
 4. **Streaming**: Use `askStreaming` for real-time response display.
 
 5. **Thread Safety**: Chat instances are not thread-safe. Create separate instances for concurrent use.
 
+6. **Unwrapping**: If you need access to the underlying Kotlin `Chat` object, use `chat.unwrap()`.
+
 ## Comparison with Pure Kotlin
 
 | Feature | Java | Kotlin |
 |---------|------|--------|
-| Simple chat | `JavaLLM.quickChat("Hi")` | `chat("Hi")` |
+| Create chat | `JavaLLM.chat("gpt-4o")` | `KotlinLLM.chat("gpt-4o")` |
+| Send message | `chat.ask("Hi")` | `chat.ask("Hi")` |
+| Quick chat | `JavaLLM.quickChat("Hi")` | `chat("Hi")` |
 | Configure | `KotlinLLM.configure(c -> { ... })` | `KotlinLLM.configure { ... }` |
-| Builder | `chatBuilder().model("x").build()` | `chat("x") { ... }` |
+| Fluent config | `chat.withInstructions(...)` | `chat.withInstructions(...)` |
 | Streaming | Callback-based | Flow-based |
 | Async | CompletableFuture | Coroutines |
 
-The Kotlin API is more concise, but the Java API provides full functionality with familiar patterns.
+The Kotlin API is more concise due to DSL support, but the Java API provides full functionality with familiar patterns.
