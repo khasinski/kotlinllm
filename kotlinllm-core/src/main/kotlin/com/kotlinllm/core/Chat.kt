@@ -47,6 +47,21 @@ class Chat(
      */
     fun model(): String = model
 
+    /**
+     * Get the current temperature setting.
+     */
+    fun temperature(): Double? = temperature
+
+    /**
+     * Get the current max tokens setting.
+     */
+    fun maxTokens(): Int? = maxTokens
+
+    /**
+     * Get the names of registered tools.
+     */
+    fun toolNames(): List<String> = tools.keys.toList()
+
     // ==================== Builder Methods ====================
 
     /**

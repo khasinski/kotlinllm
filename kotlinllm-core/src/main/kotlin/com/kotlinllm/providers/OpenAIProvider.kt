@@ -2,8 +2,9 @@ package com.kotlinllm.providers
 
 import com.kotlinllm.core.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.*
@@ -15,8 +16,6 @@ import okhttp3.sse.EventSourceListener
 import okhttp3.sse.EventSources
 import java.io.IOException
 import java.util.concurrent.TimeUnit
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.callbackFlow
 
 /**
  * OpenAI API provider.
@@ -101,7 +100,8 @@ class OpenAIProvider : Provider {
                     val chunk = parseChunk(data)
                     trySend(chunk)
                 } catch (e: Exception) {
-                    // Log and continue
+                    // Close the channel with the parsing error
+                    close(OpenAIException(0, "Failed to parse stream chunk: ${e.message} - Data: $data"))
                 }
             }
 

@@ -79,24 +79,29 @@ interface Provider {
          * Supports:
          * - OpenAI: gpt-4*, gpt-5*, o1*, o3*, o4*, gpt-image-*
          * - Anthropic: claude-*
-         * - Google: gemini-*
+         * - Google: gemini-* (not yet implemented)
          */
         fun forModel(modelId: String): Provider {
-            return when {
+            val (providerSlug, providerName) = when {
                 // OpenAI models: GPT series, o-series reasoning models, image generation
                 modelId.startsWith("gpt-") ||
                 modelId.startsWith("o1") ||
                 modelId.startsWith("o3") ||
-                modelId.startsWith("o4") -> get("openai")
+                modelId.startsWith("o4") -> "openai" to "OpenAI"
 
                 // Anthropic models
-                modelId.startsWith("claude-") -> get("anthropic")
+                modelId.startsWith("claude-") -> "anthropic" to "Anthropic"
 
-                // Google models
-                modelId.startsWith("gemini-") -> get("gemini")
+                // Google models - not yet implemented
+                modelId.startsWith("gemini-") -> throw UnsupportedOperationException(
+                    "Google Gemini models are not yet implemented. Model requested: $modelId"
+                )
 
-                else -> get("openai") // Default fallback
-            } ?: throw IllegalArgumentException("No provider found for model: $modelId")
+                else -> "openai" to "OpenAI" // Default fallback
+            }
+
+            return get(providerSlug)
+                ?: throw IllegalStateException("Provider '$providerName' is not registered. Did you forget to initialize KotlinLLM?")
         }
     }
 }

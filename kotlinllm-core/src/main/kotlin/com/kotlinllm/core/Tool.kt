@@ -135,14 +135,15 @@ class ParameterDelegate<T>(
         return this
     }
 
+    @Suppress("UNCHECKED_CAST")
     operator fun getValue(thisRef: Tool, property: kotlin.reflect.KProperty<*>): (Map<String, JsonElement>) -> T {
         return { args ->
-            val element = args[name] ?: if (required) {
-                throw IllegalArgumentException("Missing required parameter: $name")
-            } else {
-                null
+            val element = args[name]
+            when {
+                element != null -> converter(element)
+                required -> throw IllegalArgumentException("Missing required parameter: $name")
+                else -> null as T  // For optional parameters, return null (caller must use nullable type)
             }
-            element?.let { converter(it) } ?: throw IllegalArgumentException("Missing required parameter: $name")
         }
     }
 }

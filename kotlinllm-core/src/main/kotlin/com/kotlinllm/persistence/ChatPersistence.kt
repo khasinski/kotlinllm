@@ -123,6 +123,9 @@ fun Chat.toRecord(
         id = id,
         model = model(),
         instructions = systemMessage?.text,
+        temperature = temperature(),
+        maxTokens = maxTokens(),
+        toolNames = toolNames(),
         messages = messages().filter { it.role != Role.SYSTEM }.map { it.toRecord() },
         metadata = metadata
     )

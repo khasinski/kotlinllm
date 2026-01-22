@@ -73,11 +73,7 @@ class FileChatStore(
     override suspend fun delete(id: String): Boolean = withContext(Dispatchers.IO) {
         mutex.withLock {
             val file = chatFile(id)
-            if (file.exists()) {
-                file.delete()
-            } else {
-                false
-            }
+            file.exists() && file.delete()
         }
     }
 

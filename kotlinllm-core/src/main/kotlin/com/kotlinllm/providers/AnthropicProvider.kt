@@ -100,7 +100,8 @@ class AnthropicProvider : Provider {
                         trySend(chunk)
                     }
                 } catch (e: Exception) {
-                    // Log and continue
+                    // Close the channel with the parsing error
+                    close(AnthropicException(0, "Failed to parse stream event: ${e.message} - Data: $data"))
                 }
             }
 
