@@ -211,14 +211,31 @@ class Chat(
     private suspend fun complete(): Message {
         val provider = Provider.forModel(model)
 
-        val response = provider.complete(
-            messages = messages.toList(),
+        // Create request context for interceptors
+        val requestContext = LLMRequestContext(
+            provider = provider,
             model = model,
+            messages = messages.toList(),
             tools = tools.values.toList(),
             temperature = temperature,
             maxTokens = maxTokens,
-            config = config
+            streaming = false
         )
+
+        // Execute through interceptor chain
+        val responseContext = LLMInterceptors.execute(requestContext, config) { ctx, cfg ->
+            ctx.provider.complete(
+                messages = ctx.messages,
+                model = ctx.model,
+                tools = ctx.tools,
+                temperature = ctx.temperature,
+                maxTokens = ctx.maxTokens,
+                config = cfg
+            )
+        }
+
+        // Get response or throw
+        val response = responseContext.getOrThrow()
 
         addMessage(response)
         onNewMessage?.invoke(response)

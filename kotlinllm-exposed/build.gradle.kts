@@ -2,7 +2,6 @@ plugins {
     kotlin("jvm")
     kotlin("plugin.serialization")
     `java-library`
-    `maven-publish`
 }
 
 val exposedVersion = "0.46.0"
@@ -41,14 +40,6 @@ publishing {
             pom {
                 name.set("KotlinLLM Exposed")
                 description.set("JetBrains Exposed persistence adapter for KotlinLLM")
-                url.set("https://github.com/khasinski/kotlinllm")
-
-                licenses {
-                    license {
-                        name.set("MIT License")
-                        url.set("https://opensource.org/licenses/MIT")
-                    }
-                }
             }
         }
     }

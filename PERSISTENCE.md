@@ -49,7 +49,7 @@ chat.ask("What's my name?")  // "Your name is Alice"
 
 Add dependency:
 ```kotlin
-implementation("com.kotlinllm:kotlinllm-jpa:0.1.0")
+implementation("com.kotlinllm:kotlinllm-jpa:0.9.0")
 ```
 
 ```kotlin
@@ -72,7 +72,7 @@ persistence.xml entities:
 
 Add dependency:
 ```kotlin
-implementation("com.kotlinllm:kotlinllm-exposed:0.1.0")
+implementation("com.kotlinllm:kotlinllm-exposed:0.9.0")
 ```
 
 ```kotlin

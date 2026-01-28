@@ -1,7 +1,12 @@
 package com.kotlinllm
 
-import com.kotlinllm.core.*
+import com.kotlinllm.core.Chat
+import com.kotlinllm.core.Configuration
+import com.kotlinllm.core.LLMInterceptor
+import com.kotlinllm.core.LLMInterceptors
+import com.kotlinllm.core.Provider
 import com.kotlinllm.providers.AnthropicProvider
+import com.kotlinllm.providers.OllamaProvider
 import com.kotlinllm.providers.OpenAIProvider
 
 /**
@@ -52,7 +57,53 @@ object KotlinLLM {
         // Register built-in providers
         Provider.register(OpenAIProvider())
         Provider.register(AnthropicProvider())
+        Provider.register(OllamaProvider())
     }
+
+    // ==================== Interceptors ====================
+
+    /**
+     * Add a global interceptor that will be applied to all requests.
+     *
+     * ```kotlin
+     * KotlinLLM.addInterceptor(LoggingInterceptor())
+     * KotlinLLM.addInterceptor(RateLimitingInterceptor())
+     * ```
+     */
+    @JvmStatic
+    fun addInterceptor(interceptor: LLMInterceptor) {
+        LLMInterceptors.add(interceptor)
+    }
+
+    /**
+     * Remove an interceptor.
+     */
+    @JvmStatic
+    fun removeInterceptor(interceptor: LLMInterceptor) {
+        LLMInterceptors.remove(interceptor)
+    }
+
+    /**
+     * Remove an interceptor by name.
+     */
+    @JvmStatic
+    fun removeInterceptor(name: String) {
+        LLMInterceptors.remove(name)
+    }
+
+    /**
+     * Clear all interceptors.
+     */
+    @JvmStatic
+    fun clearInterceptors() {
+        LLMInterceptors.clear()
+    }
+
+    /**
+     * Get all registered interceptors.
+     */
+    @JvmStatic
+    fun interceptors(): List<LLMInterceptor> = LLMInterceptors.all()
 
     /**
      * Configure KotlinLLM.

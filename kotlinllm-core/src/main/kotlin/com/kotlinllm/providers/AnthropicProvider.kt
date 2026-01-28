@@ -349,4 +349,8 @@ class AnthropicProvider : Provider {
     }
 }
 
-class AnthropicException(val statusCode: Int, message: String) : Exception("Anthropic API error ($statusCode): $message")
+class AnthropicException(
+    statusCode: Int,
+    message: String,
+    cause: Throwable? = null
+) : com.kotlinllm.core.ProviderException(statusCode, "anthropic", message, cause)

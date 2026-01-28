@@ -23,7 +23,7 @@ val response = KotlinLLM.chat().ask("Hello!")
 
 ```kotlin
 dependencies {
-    implementation("com.kotlinllm:kotlinllm:0.1.0")
+    implementation("com.kotlinllm:kotlinllm:0.9.0")
 }
 ```
 
@@ -33,7 +33,7 @@ dependencies {
 <dependency>
     <groupId>com.kotlinllm</groupId>
     <artifactId>kotlinllm</artifactId>
-    <version>0.1.0</version>
+    <version>0.9.0</version>
 </dependency>
 ```
 

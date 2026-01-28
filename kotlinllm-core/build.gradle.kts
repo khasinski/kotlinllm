@@ -2,7 +2,6 @@ plugins {
     kotlin("jvm")
     kotlin("plugin.serialization")
     `java-library`
-    `maven-publish`
 }
 
 dependencies {
@@ -11,6 +10,7 @@ dependencies {
     api("com.squareup.okhttp3:okhttp-sse:4.12.0")
     api("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    api(kotlin("reflect"))
 
     // Optional: SLF4J for logging (user can provide their own implementation)
     compileOnly("org.slf4j:slf4j-api:2.0.9")
@@ -40,14 +40,6 @@ publishing {
             pom {
                 name.set("KotlinLLM Core")
                 description.set("A beautiful Kotlin API for LLMs - inspired by RubyLLM")
-                url.set("https://github.com/khasinski/kotlinllm")
-
-                licenses {
-                    license {
-                        name.set("MIT License")
-                        url.set("https://opensource.org/licenses/MIT")
-                    }
-                }
             }
         }
     }

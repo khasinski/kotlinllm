@@ -79,10 +79,14 @@ interface Provider {
          * Supports:
          * - OpenAI: gpt-4*, gpt-5*, o1*, o3*, o4*, gpt-image-*
          * - Anthropic: claude-*
+         * - Ollama: ollama:*, llama*, mistral*, etc.
          * - Google: gemini-* (not yet implemented)
          */
         fun forModel(modelId: String): Provider {
             val (providerSlug, providerName) = when {
+                // Ollama models: explicit prefix or known local model names
+                modelId.startsWith("ollama:") -> "ollama" to "Ollama"
+
                 // OpenAI models: GPT series, o-series reasoning models, image generation
                 modelId.startsWith("gpt-") ||
                 modelId.startsWith("o1") ||
@@ -97,11 +101,29 @@ interface Provider {
                     "Google Gemini models are not yet implemented. Model requested: $modelId"
                 )
 
+                // Check for known Ollama model prefixes
+                isKnownOllamaModel(modelId) -> "ollama" to "Ollama"
+
                 else -> "openai" to "OpenAI" // Default fallback
             }
 
             return get(providerSlug)
                 ?: throw IllegalStateException("Provider '$providerName' is not registered. Did you forget to initialize KotlinLLM?")
+        }
+
+        /**
+         * Check if a model ID matches known Ollama model names.
+         */
+        private fun isKnownOllamaModel(modelId: String): Boolean {
+            val knownPrefixes = listOf(
+                "llama", "mistral", "mixtral", "codellama", "phi",
+                "neural-chat", "starling", "vicuna", "orca", "llava",
+                "bakllava", "yi", "qwen", "deepseek", "dolphin",
+                "nous-hermes", "openchat", "zephyr", "stable", "gemma",
+                "command-r", "moondream", "tinyllama", "falcon"
+            )
+            val lowercaseId = modelId.lowercase()
+            return knownPrefixes.any { lowercaseId.startsWith(it) }
         }
     }
 }

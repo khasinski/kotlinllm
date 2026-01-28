@@ -305,4 +305,8 @@ class OpenAIProvider : Provider {
     }
 }
 
-class OpenAIException(val statusCode: Int, message: String) : Exception("OpenAI API error ($statusCode): $message")
+class OpenAIException(
+    statusCode: Int,
+    message: String,
+    cause: Throwable? = null
+) : com.kotlinllm.core.ProviderException(statusCode, "openai", message, cause)

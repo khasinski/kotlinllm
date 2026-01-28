@@ -3,7 +3,6 @@ plugins {
     kotlin("plugin.serialization")
     kotlin("plugin.jpa") version "1.9.22"
     `java-library`
-    `maven-publish`
 }
 
 dependencies {
@@ -41,14 +40,6 @@ publishing {
             pom {
                 name.set("KotlinLLM JPA")
                 description.set("JPA persistence adapter for KotlinLLM")
-                url.set("https://github.com/khasinski/kotlinllm")
-
-                licenses {
-                    license {
-                        name.set("MIT License")
-                        url.set("https://opensource.org/licenses/MIT")
-                    }
-                }
             }
         }
     }
