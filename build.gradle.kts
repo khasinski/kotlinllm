@@ -1,18 +1,18 @@
 plugins {
     kotlin("jvm") version "1.9.22" apply false
     kotlin("plugin.serialization") version "1.9.22" apply false
-    id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
+    id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
 }
 
 group = "com.kotlinllm"
 version = "0.9.0"
 
-// Nexus publishing for Maven Central
+// Nexus publishing for Maven Central (new Sonatype Central Portal)
 nexusPublishing {
     repositories {
         sonatype {
-            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
-            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
+            nexusUrl.set(uri("https://central.sonatype.com/api/v1/publisher"))
+            snapshotRepositoryUrl.set(uri("https://central.sonatype.com/api/v1/publisher"))
             username.set(providers.environmentVariable("MAVEN_USERNAME"))
             password.set(providers.environmentVariable("MAVEN_PASSWORD"))
         }
